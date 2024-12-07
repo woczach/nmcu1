@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "DFRobot_MICS.h"
 #include <Wire.h>
+#include <ESP8266WiFi.h>
+#include <MQTT.h>
 
 //zielony d1
 #define SDA D1
@@ -11,10 +13,45 @@
 #define Mics_I2C_ADDRESS 0x75
 DFRobot_MICS_I2C mics(&Wire, Mics_I2C_ADDRESS);
 
+const char* ssid = "Dom";
+const char* password = "Listo2#4";
+
+WiFiClient client;
+MQTTClient Mclient;
+
+
+void messageReceived(String &topic, String &payload) {
+  Serial.println("incoming: " + topic + " - " + payload);
+
+  // Note: Do not use the client in the callback to publish, subscribe or
+  // unsubscribe as it may cause deadlocks when other things arrive while
+  // sending and receiving acknowledgments. Instead, change a global variable,
+  // or push to a queue and handle it in the loop after calling `client.loop()`.
+}
 
 void setup() {
   Serial.begin(9600);
   Serial.println("Starting");
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }  
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  Serial.print("\nconnecting...");
+  Mclient.begin("192.168.0.230", 11883, client);
+  Mclient.onMessage(messageReceived);
+
+
+
+
+
+
   Wire.begin(D1,D2);
 
   byte error, address;
@@ -69,9 +106,21 @@ void setup() {
     delay(10000);
   }
 
+
+  Serial.print("\nconnecting...");
+  while (!Mclient.connect("arduino", "", "")) {
+    Serial.print(".");
+    delay(1000);
+  }
+
+  Serial.println("\nconnected!");
+
+
 }
 
 void loop() {
+  Mclient.loop();
+  
   float gasdata = mics.getGasData(C2H5OH);
   Serial.print("C2H5OH ");
   Serial.print(gasdata,1);
@@ -87,5 +136,14 @@ void loop() {
   Serial.print(gd3,1);
   Serial.println(" PPM");
   delay(1000);  
+
+  char str[32];
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.subscribe("C2H5OH");
+  //Mclient.publish("/hello", str);
+  dtostrf(gd2, 8, 2, str);
+  Mclient.publish("/hello1", str);
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("/hello2", "gd3");
 
 }
