@@ -120,30 +120,81 @@ void setup() {
 
 void loop() {
   Mclient.loop();
-  
+  char str[32];
+
   float gasdata = mics.getGasData(C2H5OH);
   Serial.print("C2H5OH ");
   Serial.print(gasdata,1);
   Serial.println(" PPM");
-  delay(1000);
-  float gd2 = mics.getGasData(H2);
-  Serial.print("H2 ");
-  Serial.print(gd2,1);
-  Serial.println(" PPM");
-  delay(1000);
-  float gd3 = mics.getGasData(CO);
-  Serial.print("CO ");
-  Serial.print(gd3,1);
-  Serial.println(" PPM");
-  delay(1000);  
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("esp/C2H5OH", str);  
+  delay(5000);
 
-  char str[32];
+  gasdata = mics.getGasData(H2);
+  Serial.print("H2 ");
+  Serial.print(gasdata,1);
+  Serial.println(" PPM");
   dtostrf(gasdata, 8, 2, str);
-  Mclient.subscribe("C2H5OH");
-  //Mclient.publish("/hello", str);
-  dtostrf(gd2, 8, 2, str);
-  Mclient.publish("/hello1", str);
+  Mclient.publish("esp/H2", str);    
+  delay(5000);
+
+  gasdata = mics.getGasData(CO);
+  Serial.print("CO ");
+  Serial.print(gasdata,1);
+  Serial.println(" PPM");
   dtostrf(gasdata, 8, 2, str);
-  Mclient.publish("/hello2", "gd3");
+  Mclient.publish("esp/CO", str);    
+  delay(5000);
+
+  gasdata = mics.getGasData(CH4);
+  Serial.print("CH4 ");
+  Serial.print(gasdata,1);
+  Serial.println(" PPM");
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("esp/CH4", str);    
+  delay(5000);
+
+  gasdata = mics.getGasData(NH3);
+  Serial.print("NH3 ");
+  Serial.print(gasdata,1);
+  Serial.println(" PPM");
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("esp/NH3", str);    
+  delay(5000);
+
+  gasdata = mics.getGasData(NO2);
+  Serial.print("NO2 ");
+  Serial.print(gasdata,1);
+  Serial.println(" PPM");
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("esp/NO2", str);    
+  delay(5000);
+
+  int8_t gasFlag = mics.getGasExist(C4H10);
+  if(gasFlag == EXIST){
+    Serial.println("The Iso Butane exists!");
+    gasdata = 1.0 ;
+  }else{
+    Serial.println("The Iso Butane does not exist!");
+    gasdata = 0.0 ;
+  }
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("esp/C4H10", str);    
+  delay(5000);
+
+  gasFlag = mics.getGasExist(C3H8);
+  if(gasFlag == EXIST){
+    Serial.println("The C3H8 exists!");
+    gasdata = 1.0 ;
+  }else{
+    Serial.println("The C3H8 does not exist!");
+    gasdata = 0.0 ;
+  }
+  dtostrf(gasdata, 8, 2, str);
+  Mclient.publish("esp/C3H8", str);    
+  delay(5000);
+
+
+
 
 }
